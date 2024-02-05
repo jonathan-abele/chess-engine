@@ -2,8 +2,7 @@
 Responsible for user import and displaying the game
 """
 
-
-import pygame
+import pygame as p
 from ChessGame import GameState
 
 HEIGHT = 512
@@ -14,42 +13,87 @@ MAX_FPS = 15
 
 IMAGES = {}
 
+"""
+Initialize a global dictionary of images. Called once at the beginning of the program.
+"""
+def loadImages():
+    pieces = ['wp', 'wK', 'wQ', 'wN', 'wR', 'wB', 'bp', 'bK', 'bQ', 'bN', 'bR', 'bB']
 
+    for piece in pieces:
+        IMAGES[piece] = p.image.load("images/" + piece + ".png")
 
+"""
+The main driver for program. Handle user input and updating the graphics.
+"""
 def main():
 
-    pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    clock = pygame.time.Clock()
-    screen.fill(pygame.Color('white'))
+    p.init()
+    screen = p.display.set_mode((WIDTH, HEIGHT))
+    clock = p.time.Clock()
+    screen.fill(p.Color('white'))
+
+    loadImages()
 
     game = GameState()
-
     running = True
 
+    square_selected = () # keep track of the last square selected
+    first_click = False
+
     while running:
-        for e in pygame.event.get():
-            if e.type == pygame.QUIT:
+        for e in p.event.get():
+            if e.type == p.QUIT:
                 running = False
+            elif e.type == p.MOUSEBUTTONDOWN:
+
+                first_click = not first_click 
+
+                location = p.mouse.get_pos()
+                col = location[0] // SQ_SIZE
+                row = location[1] // SQ_SIZE
+                clicked_square = (row, col)
+
+                if first_click:
+                    if game.checkIfCanSelect(clicked_square):
+                        square_selected = clicked_square
+                    else:
+                        first_click = False
+                else:
+                    game.move(square_selected, clicked_square)
+             
 
         drawGameState(screen, game)
         clock.tick(MAX_FPS)
-        pygame.display.flip()
+        p.display.flip()
+
+
 
 def drawGameState(screen, game):
     drawBoard(screen) # draw squares on the board
-
+    drawPieces(screen, game.board)
 
 """
 Draw the squares on the board
 """
 def drawBoard(screen):
-    colors = [pygame.Color('white'), pygame.Color('gray')]
+    colors = [p.Color('white'), p.Color('gray')]
 
     for r in range (DIMENSION):
         for c in range (DIMENSION):
             color = colors[(r+c) % 2]
-            pygame.draw.rect(screen, color, pygame.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
+            p.draw.rect(screen, color, p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
+
+"""
+Draw the pieces on the board using the current GameState.board
+"""
+def drawPieces(screen, board):
+    for r in range(DIMENSION):
+        for c in range(DIMENSION):
+            piece = board[r][c]
+            if piece != "--":
+                screen.blit(IMAGES[piece], p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
+
+
 
 if __name__ == "__main__":
     main()
