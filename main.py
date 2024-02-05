@@ -60,28 +60,35 @@ def main():
                         first_click = False
                 else:
                     game.move(square_selected, clicked_square)
+                    square_selected = ()
              
 
-        drawGameState(screen, game)
+        drawGameState(screen, game, square_selected)
         clock.tick(MAX_FPS)
         p.display.flip()
 
 
 
-def drawGameState(screen, game):
-    drawBoard(screen) # draw squares on the board
+def drawGameState(screen, game, square_selected):
+    drawBoard(screen, square_selected) # draw squares on the board
     drawPieces(screen, game.board)
 
 """
 Draw the squares on the board
 """
-def drawBoard(screen):
+def drawBoard(screen, square_selected):
     colors = [p.Color('white'), p.Color('gray')]
+
 
     for r in range (DIMENSION):
         for c in range (DIMENSION):
             color = colors[(r+c) % 2]
-            p.draw.rect(screen, color, p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
+        
+            if len(square_selected) != 0 and r == square_selected[0] and c == square_selected[1]:
+                p.draw.rect(screen, p.Color(173, 216, 230), p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
+            else:
+                p.draw.rect(screen, color, p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
+          
 
 """
 Draw the pieces on the board using the current GameState.board
