@@ -44,7 +44,6 @@ class GameState():
         self.whiteToMove = not self.whiteToMove
 
     def checkIfCanSelect (self, square):
-
         piece = self.board[square[0]][square[1]]
 
         if self.whiteToMove and isPieceWhite(piece):
@@ -54,3 +53,65 @@ class GameState():
         else:
             return False
         
+
+    def get_all_possible_moves (self):
+        
+        moves = []
+
+        for r in range(self.board):
+            for c in range(self.board[r]):
+                if self.board[r][c] is not "--":
+                    color = self.board[r][c][0]
+                    if (color == 'w' and self.whiteToMove) or (color == 'w' and self.whiteToMove):
+                        piece = self.board[r][c][1]
+
+                        if piece == 'P':
+                            moves.append(self.get_pawn_moves(r, c))
+                        if piece == 'R':
+                            moves.append(self.get_rook_moves(r, c))
+                        if piece == 'B':
+                            moves.append(self.get_bishop_moves(r, c))
+                        if piece == 'N':
+                            moves.append(self.get_knight_moves(r, c))
+                        if piece == 'Q':
+                            moves.append(self.get_queen_moves(r, c))
+                        if piece == 'K':
+                            moves.append(self.get_king_moves(r, c))
+
+
+
+
+    def get_pawn_moves(self, r, c):
+        pass
+
+    def get_rook_moves(self, r, c):
+        pass
+
+    def get_bishop_moves(self, r, c):
+        pass
+
+    def get_knight_moves(self, r, c):
+        pass
+
+    def get_queen_moves(self, r, c):
+        pass
+
+    def get_king_moves(self, r, c):
+        pass
+
+
+        
+
+
+class Move():
+
+    # Dictionaries that change row to 
+
+    # Inializes a move object
+    def __init__ (self, start_square, end_square, board):
+        pass
+
+
+    # Gets the chess notation from the starting square and ending
+    def get_chess_notation():
+        pass

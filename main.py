@@ -5,11 +5,20 @@ Responsible for user import and displaying the game
 import pygame as p
 from ChessGame import GameState
 
-HEIGHT = 512
-WIDTH = 512
+HEIGHT = 600
+WIDTH = 600
+BOARD_HEIGHT = 512
+BOARD_WIDTH = 512
 DIMENSION = 8
-SQ_SIZE = HEIGHT // DIMENSION
+SQ_SIZE = BOARD_HEIGHT // DIMENSION
 MAX_FPS = 15
+WHITE = p.Color('white')
+GRAY = p.Color('gray')
+SELECTED_SQUARE_COLOR = p.Color(173, 216, 230)
+
+# Calculate the offset for the board to be centered inside the black area
+board_x_offset = (WIDTH - BOARD_WIDTH) // 2
+board_y_offset = (HEIGHT - BOARD_HEIGHT) // 2
 
 IMAGES = {}
 
@@ -30,16 +39,19 @@ def main():
     p.init()
     screen = p.display.set_mode((WIDTH, HEIGHT))
     clock = p.time.Clock()
-    screen.fill(p.Color('white'))
+    screen.fill(p.Color('black'))
 
     loadImages()
 
     game = GameState()
     running = True
 
+    
+
     square_selected = () # keep track of the last square selected
     first_click = False
 
+    
     while running:
         for e in p.event.get():
             if e.type == p.QUIT:
@@ -51,7 +63,12 @@ def main():
                 location = p.mouse.get_pos()
                 col = location[0] // SQ_SIZE
                 row = location[1] // SQ_SIZE
-                clicked_square = (row, col)
+                clicked_square = getBoardSquare(location)
+
+                if clicked_square is None:
+                    first_click = False
+                    square_selected = ()
+                    continue
 
                 if first_click:
                     if game.checkIfCanSelect(clicked_square):
@@ -67,7 +84,23 @@ def main():
         clock.tick(MAX_FPS)
         p.display.flip()
 
+def getBoardSquare(mouse_pos):
+    # Unpack mouse position
+    mouse_x, mouse_y = mouse_pos
 
+    # Adjust mouse position to be relative to the board
+    adjusted_x = mouse_x - board_x_offset
+    adjusted_y = mouse_y - board_y_offset
+
+    # Check if the mouse is within the board area
+    if 0 <= adjusted_x < BOARD_WIDTH and 0 <= adjusted_y < BOARD_HEIGHT:
+        # Calculate the row and column based on the adjusted mouse position
+        col = adjusted_x // SQ_SIZE
+        row = adjusted_y // SQ_SIZE
+        return (int(row), int(col))  # Return the clicked square as (row, col)
+    else:
+        # Mouse click is outside the board
+        return None
 
 def drawGameState(screen, game, square_selected):
     drawBoard(screen, square_selected) # draw squares on the board
@@ -77,17 +110,17 @@ def drawGameState(screen, game, square_selected):
 Draw the squares on the board
 """
 def drawBoard(screen, square_selected):
-    colors = [p.Color('white'), p.Color('gray')]
-
+    colors = [WHITE, GRAY]
 
     for r in range (DIMENSION):
         for c in range (DIMENSION):
             color = colors[(r+c) % 2]
+
         
             if len(square_selected) != 0 and r == square_selected[0] and c == square_selected[1]:
-                p.draw.rect(screen, p.Color(173, 216, 230), p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
+                p.draw.rect(screen, SELECTED_SQUARE_COLOR, p.Rect(c*SQ_SIZE + board_x_offset, r*SQ_SIZE + board_y_offset, SQ_SIZE, SQ_SIZE))
             else:
-                p.draw.rect(screen, color, p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
+                p.draw.rect(screen, color, p.Rect(c*SQ_SIZE + board_x_offset, r*SQ_SIZE + board_y_offset, SQ_SIZE, SQ_SIZE))
           
 
 """
@@ -98,7 +131,7 @@ def drawPieces(screen, board):
         for c in range(DIMENSION):
             piece = board[r][c]
             if piece != "--":
-                screen.blit(IMAGES[piece], p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
+                screen.blit(IMAGES[piece], p.Rect(c*SQ_SIZE + board_x_offset, r*SQ_SIZE + board_y_offset, SQ_SIZE, SQ_SIZE))
 
 
 
