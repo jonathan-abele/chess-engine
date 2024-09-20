@@ -4,6 +4,7 @@ Responsible for user import and displaying the game
 
 import pygame as p
 from ChessGame import GameState
+from ChessGame import Move
 
 HEIGHT = 600
 WIDTH = 600
@@ -49,7 +50,7 @@ def main():
     
 
     square_selected = () # keep track of the last square selected
-    first_click = False
+    first_click = True
 
     
     while running:
@@ -58,27 +59,35 @@ def main():
                 running = False
             elif e.type == p.MOUSEBUTTONDOWN:
 
-                first_click = not first_click 
+                possible_moves = game.get_all_possible_moves()
 
                 location = p.mouse.get_pos()
-                col = location[0] // SQ_SIZE
-                row = location[1] // SQ_SIZE
                 clicked_square = getBoardSquare(location)
 
+                # Clicked off of chess board
                 if clicked_square is None:
-                    first_click = False
+                    first_click = True
                     square_selected = ()
                     continue
-
+                
                 if first_click:
-                    if game.checkIfCanSelect(clicked_square):
+                    if game.checkIfCanSelect(clicked_square): # selected piece of right color
                         square_selected = clicked_square
-                    else:
                         first_click = False
+                    else:
+                        first_click = True        
                 else:
-                    game.move(square_selected, clicked_square)
-                    square_selected = ()
-             
+                    if Move(square_selected, clicked_square) in possible_moves: # chose a valid square to move to
+                        game.make_move(square_selected, clicked_square)
+                        square_selected = ()
+                        first_click = True
+                    elif game.checkIfCanSelect(clicked_square): # Choosing to move another piece
+                        square_selected = clicked_square
+                        firt_click = False
+                    else: # not a valid square to move to
+                        square_selected = ()
+                        first_click = True
+                        
 
         drawGameState(screen, game, square_selected)
         clock.tick(MAX_FPS)
