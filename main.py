@@ -4,9 +4,12 @@ Responsible for user import and displaying the game
 
 import pygame as p
 from ChessGame import GameState
+from Engine import get_random_move
 
 HEIGHT = 600
 WIDTH = 600
+MENU_HEIGHT = 300
+MENU_WIDTH = 300
 BOARD_HEIGHT = 512
 BOARD_WIDTH = 512
 DIMENSION = 8
@@ -46,7 +49,10 @@ def main():
     game = GameState()
     running = True
 
+    show_menu = False
     playing_black = False
+
+    players_turn = False if playing_black else True
 
     square_selected = () # keep track of the last square selected
     first_click = True
@@ -57,10 +63,25 @@ def main():
             if e.type == p.QUIT:
                 running = False
             elif e.type == p.MOUSEBUTTONDOWN:
+                location = p.mouse.get_pos()
+
+                # If menu open
+                if show_menu:
+                    menu_x, menu_y = draw_menu(screen)
+                    if (menu_x + 20 < location[0] < menu_x + 120 and
+                            menu_y + 100 < location[1] < menu_y + 130):  # Restart area
+                        game = GameState()  # Reset the game state
+                        square_selected = ()
+                        first_click = True
+                        players_turn = False if playing_black else True
+                        show_menu = False  # Close the menu after restarting
+                        continue
+                    continue
+
+                if not players_turn:
+                    continue
 
                 possible_moves = game.get_all_possible_moves()
-
-                location = p.mouse.get_pos()
                 clicked_square = getBoardSquare(location, playing_black)
 
                 # Clicked off of chess board
@@ -80,15 +101,39 @@ def main():
                         game.make_move(square_selected, clicked_square)
                         square_selected = ()
                         first_click = True
+                        players_turn = False
                     elif game.checkIfCanSelect(clicked_square): # Choosing to move another piece
                         square_selected = clicked_square
                         first_click = False
                     else: # not a valid square to move to
                         square_selected = ()
                         first_click = True
-                        
 
         drawGameState(screen, game, square_selected, playing_black)
+        clock.tick(MAX_FPS)
+        p.display.flip()
+
+        if not players_turn and not game.game_over:
+            # possible_moves = game.get_all_possible_moves()
+            # move = get_random_move(possible_moves)
+
+            # Min max algorithm
+            move = None
+            if playing_black:
+                score, move = game.alpha_beta_max(float('-inf'), float('inf'), 4)
+            else:
+                score, move = game.alpha_beta_min(float('-inf'), float('inf'), 4)
+
+            start_square, end_square = game.notation_to_squares(move)
+            game.make_move(start_square, end_square)
+            players_turn = True
+
+        drawGameState(screen, game, square_selected, playing_black)
+
+        if game.game_over:
+            show_menu = True
+            draw_menu(screen)
+
         clock.tick(MAX_FPS)
         p.display.flip()
 
@@ -157,6 +202,39 @@ def drawPieces(screen, board, is_black):
                 screen.blit(IMAGES[piece], p.Rect(draw_c*SQ_SIZE + board_x_offset, draw_r*SQ_SIZE + board_y_offset, SQ_SIZE, SQ_SIZE))
 
 
+"""
+Draw the menu overlay
+"""
+def draw_menu(screen):
+    overlay = p.Surface((WIDTH, HEIGHT))
+    overlay.fill(p.Color('black'))
+    overlay.set_alpha(100)  # Semi-transparent
+    screen.blit(overlay, (0, 0))
+
+    # Calculate the position to center the menu
+    menu = p.Surface((MENU_WIDTH, MENU_HEIGHT))
+    menu_x = (WIDTH - MENU_WIDTH) // 2
+    menu_y = (HEIGHT - MENU_HEIGHT) // 2
+    screen.blit(menu, (menu_x, menu_y))
+
+    font = p.font.Font(None, 36)
+    text = font.render("Check Mate", True, WHITE)
+    text_rect = text.get_rect(center=(menu_x + MENU_WIDTH // 2, menu_y + 50))  # Centered at the top of the menu
+    screen.blit(text, text_rect)
+
+     # Menu options
+    restart_text = font.render("Restart", True, WHITE)
+    screen.blit(restart_text, (menu_x + 20, menu_y + 100))
+
+    close_text = font.render("Close Menu", True, WHITE)
+    screen.blit(close_text, (menu_x + 20, menu_y + 150))
+
+    return menu_x, menu_y  # Return the menu position for hit detection
+
+
+# Blur function
+def blur_surface(surface):
+    return p.transform.smoothscale(surface, (WIDTH // 4, HEIGHT // 4))
 
 if __name__ == "__main__":
     main()
